@@ -4,8 +4,18 @@
   "private": true,
   "type": "module",
   "description": "Two complete local-only idle games over one declarative progression engine.",
-  "repository": {"type":"git","url":"git+https://github.com/red-cup-engineering/web-game-services-section.git"},
-  "engines": {"node": ">=22"},
-  "dependencies": {"@red-cup-engineering/computer-data-engineering-services-section":"0.6.1"},
-  "scripts": {"test":"node --test", "build":"node scripts/build.mjs"}
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/red-cup-engineering/incremental-idle-game.git"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@red-cup-engineering/computer-data-engineering-services-section": "0.6.1"
+  },
+  "scripts": {
+    "test": "node --test",
+    "build": "node scripts/build.mjs"
+  }
 }
