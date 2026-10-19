@@ -1,0 +1,45 @@
+#!/usr/bin/env node
+/** Static publisher for the actual browser game, not a second HTTP host. */
+import { readFile, writeFile, mkdir, copyFile } from 'node:fs/promises';
+import { join, dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
+const supplier='@red-cup-engineering/computer-data-engineering-services-section/simulation/discrete-clock';
+const src=path=>join(root,'src',path);
+
+export async function build(out = join(root,'dist')) {
+  const dest=resolve(out);
+  await mkdir(join(dest,'assets'),{recursive:true});
+  const engine=await readFile(src('engine.mjs'),'utf8');
+  if (!engine.includes(`'${supplier}'`)) throw new Error('game engine must import canonical data clock');
+  await writeFile(join(dest,'assets','engine.mjs'),engine.replace(`'${supplier}'`,`'./discrete-clock.mjs'`));
+  await copyFile(src('worlds.mjs'),join(dest,'assets','worlds.mjs'));
+  await copyFile(src('browser.mjs'),join(dest,'assets','browser.mjs'));
+  await copyFile(src('style.css'),join(dest,'assets','style.css'));
+  await copyFile(fileURLToPath(import.meta.resolve(supplier)),join(dest,'assets','discrete-clock.mjs'));
+  await writeFile(join(dest,'index.html'),`<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Two genuine browser idle games with deterministic progression, offline production and no financial rewards.">
+<title>Little Worlds — Incremental Idle Games</title><link rel="stylesheet" href="./assets/style.css"></head>
+<body><main><div class="eyebrow">561 Group · Little Worlds · Free local games</div>
+<header class="hero"><div><h1 id="world-name">Little Worlds</h1><p class="lead" id="world-description">Two original incremental idle games.</p></div><aside>No paywalls. No wallets. Just little things growing.</aside></header>
+<nav id="worlds" class="worlds" aria-label="Choose an idle game"></nav>
+<div class="layout">
+<section class="panel"><div class="eyebrow">Your progress</div><h2><span id="currency">Points</span> on hand</h2>
+<div class="stats"><div class="stat"><strong id="banked">0</strong><span>Available</span></div><div class="stat"><strong id="rate">0 / sec</strong><span>Automatic production</span></div><div class="stat"><strong id="tap-yield">+1</strong><span>Manual yield</span></div><div class="stat"><strong id="run-produced">0</strong><span>Produced this run</span></div><div class="stat"><strong id="all-time">0</strong><span>All-time production</span></div><div class="stat"><strong id="prestige-points">0</strong><span>Permanent sparks</span></div></div>
+<button type="button" id="tap" class="tap">Collect</button><p id="status" class="feedback" role="status" aria-live="polite"></p>
+<div class="note"><strong>Replant / Prestige</strong><p>Trade this run for permanent sparks. Each spark makes later tapping and idle production stronger. Choose when to reset.</p><button type="button" class="secondary" id="prestige" disabled>Replant</button></div>
+<p id="offline-rule" class="muted"></p></section>
+<section class="panel"><div class="eyebrow">Build your world</div><h2>Producers</h2><div id="producers"></div><h2>Upgrades</h2><div id="upgrades"></div></section>
+<section class="panel wide"><div class="eyebrow">Own your local progress</div><h2>Save, move, or start fresh</h2><p>Your worlds save separately on this device. Export a copy if you want to keep them. Nothing here is cryptocurrency, a cash reward, or transferable value.</p>
+<div class="tools"><button type="button" class="secondary" id="export">Export this world</button><button type="button" class="secondary" id="import">Import pasted save</button><button type="button" class="secondary" id="reset">Reset this world</button></div>
+<label for="save-data">Save text (JSON)</label><textarea id="save-data" spellcheck="false" aria-label="Saved game JSON"></textarea></section>
+</div><footer>Local-only play · No ads, accounts, analytics, financial transactions, or artificial players. Offline progress uses your device clock and can be changed by your device. Accessible by keyboard; reduced motion is respected.</footer>
+</main><script type="module" src="./assets/browser.mjs"></script></body></html>\n`);
+  await writeFile(join(dest,'_headers'),`/*\n  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src 'self' data:; base-uri 'none'; object-src 'none'; form-action 'none'; frame-ancestors 'none'\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: no-referrer\n`);
+  return {dest,files:['index.html','assets/engine.mjs','assets/discrete-clock.mjs','assets/worlds.mjs','assets/browser.mjs','assets/style.css','_headers']};
+}
+if(process.argv[1] && resolve(process.argv[1])===fileURLToPath(import.meta.url)) {
+  const index=process.argv.indexOf('--out');
+  build(index<0?undefined:process.argv[index+1]).then(({dest})=>console.log(`Built playable idle games: ${dest}`)).catch(error=>{console.error(error);process.exitCode=1;});
+}
