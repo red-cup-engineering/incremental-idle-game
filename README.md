@@ -1,5 +1,12 @@
 # Little Worlds — Incremental Idle Game
 
+<!-- 561-group-standards:badges:start -->
+[![Red Cup Engineering](https://img.shields.io/badge/561%20Group-Red%20Cup%20Engineering-c0392b)](https://github.com/red-cup-engineering)
+[![License: MIT](https://img.shields.io/badge/license-MIT-c0392b)](LICENSE)
+[![Indigenous data: CARE](https://img.shields.io/badge/Indigenous%20data-CARE-4b6f44)](https://github.com/red-cup-engineering/.github/blob/main/GOVERNANCE.md)
+[![Tips welcome](https://img.shields.io/badge/tips-welcome-d4a017)](https://github.com/561-group/.github/blob/main/TIPS.md)
+<!-- 561-group-standards:badges:end -->
+
 Red Cup Engineering's reusable **typed, declarative incremental-game engine** and a genuinely playable, zero-custody browser consumer. It builds two independent, original local-only worlds: **Trace Garden** and **Pocket Observatory**. Neither is a mining service, advertisement, money-like reward, blockchain game or public account system.
 
 ## Native developer use
