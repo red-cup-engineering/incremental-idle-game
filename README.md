@@ -11,15 +11,34 @@ Red Cup Engineering's reusable **typed, declarative incremental-game engine** an
 
 ## Native developer use
 
-Node >=22, in the 561 Group's normal workspace with Computer Data selected:
+Node >=24, with the declared Computer Data and pinned JSNode fabrication supplier installed:
 
 ```sh
+npm run check:generated
 npm test
 npm run build
 python3 -m http.server --directory dist 8080
 ```
 
 Open `http://127.0.0.1:8080/` and click, purchase a producer, let it grow, buy upgrades, reload, try the other world, and eventually Replant for permanent sparks. Every input action has a deterministic pure transition. `/assets/discrete-clock.mjs` is a **copied build artifact from the installed Computer Data supplier**, not another leaf implementation. The publisher reads the canonical package's exact resolved file and rewrites the engine's module specifier for static ESM browser loading; it does not ship a private package registry or start a second hosting system.
+
+## Fabricate world rules from designs
+
+Edit `design/world-catalog.json`, whose structural contract is
+`design/world-catalog.schema.json`, then run `npm run generate`. The shared
+JSNode module producer validates the declared data and fabricates the immutable
+ESM catalog in `src/generated/world-definitions.mjs`; the game retains semantic
+admission in `defineWorld`. No source editing is needed to add another world
+within that contract. The original two worlds retain their game rules and saves.
+
+`npm run check:generated` compares without writing. The build performs that same
+check before creating output, so a changed design or hand-edited generated file
+cannot silently reach the browser. `dist/fabrication-receipt.json` binds the
+schema, catalog, generated source, clock supplier and static artifact bytes by
+SHA-256. Read `design/README.md` for the requirement-to-receiving trace and save
+compatibility boundary. These are deterministic data projections; algorithm
+synthesis, isolated inference assays and production activation retain their
+separate contracts.
 
 ## Actual mechanics
 

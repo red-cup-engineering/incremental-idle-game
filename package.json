@@ -9,12 +9,14 @@
     "url": "git+https://github.com/red-cup-engineering/incremental-idle-game.git"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
   "dependencies": {
     "@red-cup-engineering/computer-data-engineering-services-section": "0.6.1"
   },
   "scripts": {
+    "generate": "node scripts/generate-worlds.mjs",
+    "check:generated": "node scripts/generate-worlds.mjs --check",
     "test": "node --test",
     "build": "node scripts/build.mjs"
   },
@@ -22,5 +24,8 @@
   "funding": {
     "type": "individual",
     "url": "https://github.com/561-group/.github/blob/main/TIPS.md"
+  },
+  "devDependencies": {
+    "@red-cup-engineering/jsnode-package-services-section": "git+https://github.com/red-cup-engineering/jsnode-package-engineering-services-section.git#010bc1fa795ac20e426ae8a4c4e9df6db21426f3"
   }
 }
