@@ -1,22 +1,27 @@
 #!/usr/bin/env node
 /** Static publisher for the actual browser game, not a second HTTP host. */
-import { readFile, writeFile, mkdir, copyFile } from 'node:fs/promises';
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
+import { generateWorlds } from './generate-worlds.mjs';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const supplier='@red-cup-engineering/computer-data-engineering-services-section/simulation/discrete-clock';
 const src=path=>join(root,'src',path);
 
 export async function build(out = join(root,'dist')) {
   const dest=resolve(out);
-  await mkdir(join(dest,'assets'),{recursive:true});
+  // Capture and check the authored design before producing any build output.
+  const fabrication=await generateWorlds({check:true,root});
   const engine=await readFile(src('engine.mjs'),'utf8');
   if (!engine.includes(`'${supplier}'`)) throw new Error('game engine must import canonical data clock');
+  const assets=await Promise.all(['worlds.mjs','browser.mjs','style.css'].map(async name=>[name,await readFile(src(name))]));
+  const clock=await readFile(fileURLToPath(import.meta.resolve(supplier)));
+  await mkdir(join(dest,'assets','generated'),{recursive:true});
   await writeFile(join(dest,'assets','engine.mjs'),engine.replace(`'${supplier}'`,`'./discrete-clock.mjs'`));
-  await copyFile(src('worlds.mjs'),join(dest,'assets','worlds.mjs'));
-  await copyFile(src('browser.mjs'),join(dest,'assets','browser.mjs'));
-  await copyFile(src('style.css'),join(dest,'assets','style.css'));
-  await copyFile(fileURLToPath(import.meta.resolve(supplier)),join(dest,'assets','discrete-clock.mjs'));
+  for (const [name,bytes] of assets) await writeFile(join(dest,'assets',name),bytes);
+  await writeFile(join(dest,'assets','generated','world-definitions.mjs'),fabrication.files[0].text);
+  await writeFile(join(dest,'assets','discrete-clock.mjs'),clock);
   await writeFile(join(dest,'index.html'),`<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="Two genuine browser idle games with deterministic progression, offline production and no financial rewards.">
@@ -37,7 +42,16 @@ export async function build(out = join(root,'dist')) {
 </div><footer>Local-only play · No ads, accounts, analytics, financial transactions, or artificial players. Offline progress uses your device clock and can be changed by your device. Accessible by keyboard; reduced motion is respected.</footer>
 </main><script type="module" src="./assets/browser.mjs"></script></body></html>\n`);
   await writeFile(join(dest,'_headers'),`/*\n  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src 'self' data:; base-uri 'none'; object-src 'none'; form-action 'none'; frame-ancestors 'none'\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: no-referrer\n`);
-  return {dest,files:['index.html','assets/engine.mjs','assets/discrete-clock.mjs','assets/worlds.mjs','assets/browser.mjs','assets/style.css','_headers']};
+  const files=['index.html','assets/engine.mjs','assets/discrete-clock.mjs','assets/worlds.mjs','assets/generated/world-definitions.mjs','assets/browser.mjs','assets/style.css','_headers'];
+  const digest=bytes=>'sha256:'+createHash('sha256').update(bytes).digest('hex');
+  const manifest=await Promise.all(files.map(async path=>({path,digest:digest(await readFile(join(dest,path)))})));
+  const receipt={kind:'561.incremental-idle-fabrication-receipt/v1',
+    design:fabrication.design,generated:fabrication.generated,
+    producer:fabrication.producer,
+    supplier:{specifier:supplier,digest:digest(clock)},artifacts:manifest,
+    receiving:'Deterministic design admission and static build; public deployment and player receiving are separate.'};
+  await writeFile(join(dest,'fabrication-receipt.json'),JSON.stringify(receipt,null,2)+'\n');
+  return {dest,files:[...files,'fabrication-receipt.json'],receipt};
 }
 if(process.argv[1] && resolve(process.argv[1])===fileURLToPath(import.meta.url)) {
   const index=process.argv.indexOf('--out');
